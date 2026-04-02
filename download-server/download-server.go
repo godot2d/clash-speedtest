@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/faceair/clash-speedtest/speedtester"
+	"github.com/godot2d/clash-speedtest/speedtester"
 )
 
 func main() {

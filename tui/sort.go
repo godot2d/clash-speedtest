@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/faceair/clash-speedtest/speedtester"
+	"github.com/godot2d/clash-speedtest/speedtester"
 )
 
 func (m *tuiModel) recordSequence(result *speedtester.Result) {

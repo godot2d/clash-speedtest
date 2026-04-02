@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/faceair/clash-speedtest/speedtester"
+	"github.com/godot2d/clash-speedtest/speedtester"
 )
 
 // GetHeaders returns table headers based on speed mode.

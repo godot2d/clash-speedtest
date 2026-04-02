@@ -6,7 +6,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/faceair/clash-speedtest/speedtester"
+	"github.com/godot2d/clash-speedtest/speedtester"
 )
 
 func TestTUIModelDetailPanelToggle(t *testing.T) {

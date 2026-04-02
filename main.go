@@ -10,11 +10,11 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/faceair/clash-speedtest/gist"
-	"github.com/faceair/clash-speedtest/ip"
-	"github.com/faceair/clash-speedtest/output"
-	"github.com/faceair/clash-speedtest/speedtester"
-	"github.com/faceair/clash-speedtest/tui"
+	"github.com/godot2d/clash-speedtest/gist"
+	"github.com/godot2d/clash-speedtest/ip"
+	"github.com/godot2d/clash-speedtest/output"
+	"github.com/godot2d/clash-speedtest/speedtester"
+	"github.com/godot2d/clash-speedtest/tui"
 	mihomolog "github.com/metacubex/mihomo/log"
 	"gopkg.in/yaml.v2"
 )

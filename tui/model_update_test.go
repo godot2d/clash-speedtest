@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/faceair/clash-speedtest/speedtester"
+	"github.com/godot2d/clash-speedtest/speedtester"
 )
 
 // TestTUIModelUpdate tests the TUI model update logic

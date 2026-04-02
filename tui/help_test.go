@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/faceair/clash-speedtest/speedtester"
+	"github.com/godot2d/clash-speedtest/speedtester"
 )
 
 func TestHelpViewShowsQuitAndDetailKeys(t *testing.T) {
