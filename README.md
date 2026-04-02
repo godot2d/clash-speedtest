@@ -33,7 +33,7 @@ rules:
 
 ```bash
 # 支持从源码安装，或从 Release 里下载由 Github Action 自动构建的二进制文件
-> go install github.com/faceair/clash-speedtest@latest
+> go install github.com/godot2d/clash-speedtest@latest
 
 # 查看版本
 > clash-speedtest -v
@@ -201,7 +201,7 @@ clash-speedtest --server-url "https://speed.cloudflare.com" --speed-mode full
 
 ```shell
 # 在您需要进行测速的服务器上安装和启动测速服务器
-> go install github.com/faceair/clash-speedtest/download-server@latest
+> go install github.com/godot2d/clash-speedtest/download-server@latest
 > download-server
 
 # 此时在本地使用 http://your-server-ip:8080 作为 server-url 即可
