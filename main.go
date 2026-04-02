@@ -212,15 +212,10 @@ func saveConfig(results []*speedtester.Result, mode speedtester.SpeedMode) error
 			continue
 		}
 		if *renameNodes {
-			location, err := ip.GetIPLocation(proxyConfig["server"].(string))
-			if err != nil || location.CountryCode == "" {
-				proxies = append(proxies, proxyConfig)
-				continue
-			}
-			name, err := ip.GenerateNodeNameFromTemplate(*renameTemplate, location.CountryCode, result.Latency, result.DownloadSpeed, result.UploadSpeed, nameCount)
+			name, err := ip.GenerateNodeNameFromTemplate(*renameTemplate, result.ProxyName, result.Latency, result.DownloadSpeed, result.UploadSpeed, result.PacketLoss, nameCount)
 			if err != nil {
 				log.Printf("rename template parse error: %s, use default name", err)
-				name = ip.GenerateNodeName(location.CountryCode, result.Latency, result.DownloadSpeed, result.UploadSpeed, nameCount)
+				name = ip.GenerateNodeName(result.ProxyName, result.Latency, result.DownloadSpeed, result.UploadSpeed, result.PacketLoss, nameCount)
 			}
 			proxyConfig["name"] = name
 		}

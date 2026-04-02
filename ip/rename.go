@@ -3,48 +3,34 @@ package ip
 import (
 	"bytes"
 	"fmt"
-	"strings"
 	"text/template"
 	"time"
 )
 
-var countryFlags = map[string]string{
-	"US": "🇺🇸", "CN": "🇨🇳", "GB": "🇬🇧", "UK": "🇬🇧", "JP": "🇯🇵", "DE": "🇩🇪", "FR": "🇫🇷", "RU": "🇷🇺",
-	"SG": "🇸🇬", "HK": "🇭🇰", "TW": "🇨🇳", "KR": "🇰🇷", "CA": "🇨🇦", "AU": "🇦🇺", "NL": "🇳🇱", "IT": "🇮🇹",
-	"ES": "🇪🇸", "SE": "🇸🇪", "NO": "🇳🇴", "DK": "🇩🇰", "FI": "🇫🇮", "CH": "🇨🇭", "AT": "🇦🇹", "BE": "🇧🇪",
-	"BR": "🇧🇷", "IN": "🇮🇳", "TH": "🇹🇭", "MY": "🇲🇾", "VN": "🇻🇳", "PH": "🇵🇭", "ID": "🇮🇩", "UA": "🇺🇦",
-	"TR": "🇹🇷", "IL": "🇮🇱", "AE": "🇦🇪", "SA": "🇸🇦", "EG": "🇪🇬", "ZA": "🇿🇦", "NG": "🇳🇬", "KE": "🇰🇪",
-	"RO": "🇷🇴", "PL": "🇵🇱", "CZ": "🇨🇿", "HU": "🇭🇺", "BG": "🇧🇬", "HR": "🇭🇷", "SI": "🇸🇮", "SK": "🇸🇰",
-	"LT": "🇱🇹", "LV": "🇱🇻", "EE": "🇪🇪", "PT": "🇵🇹", "GR": "🇬🇷", "IE": "🇮🇪", "LU": "🇱🇺", "MT": "🇲🇹",
-	"CY": "🇨🇾", "IS": "🇮🇸", "MX": "🇲🇽", "AR": "🇦🇷", "CL": "🇨🇱", "CO": "🇨🇴", "PE": "🇵🇪", "VE": "🇻🇪",
-	"EC": "🇪🇨", "UY": "🇺🇾", "PY": "🇵🇾", "BO": "🇧🇴", "CR": "🇨🇷", "PA": "🇵🇦", "GT": "🇬🇹", "HN": "🇭🇳",
-	"SV": "🇸🇻", "NI": "🇳🇮", "BZ": "🇧🇿", "JM": "🇯🇲", "TT": "🇹🇹", "BB": "🇧🇧", "GD": "🇬🇩", "LC": "🇱🇨",
-	"VC": "🇻🇨", "AG": "🇦🇬", "DM": "🇩🇲", "KN": "🇰🇳", "BS": "🇧🇸", "CU": "🇨🇺", "DO": "🇩🇴", "HT": "🇭🇹",
-	"PR": "🇵🇷", "VI": "🇻🇮", "GU": "🇬🇺", "AS": "🇦🇸", "MP": "🇲🇵", "PW": "🇵🇼", "FM": "🇫🇲", "MH": "🇲🇭",
-	"KI": "🇰🇮", "TV": "🇹🇻", "NR": "🇳🇷", "WS": "🇼🇸", "TO": "🇹🇴", "FJ": "🇫🇯", "VU": "🇻🇺", "SB": "🇸🇧",
-	"PG": "🇵🇬", "NC": "🇳🇨", "PF": "🇵🇫", "WF": "🇼🇫", "CK": "🇨🇰", "NU": "🇳🇺", "TK": "🇹🇰", "SC": "🇸🇨",
-}
-
 // DefaultNameTemplate is the built-in format when -rename-template is not set.
-const DefaultNameTemplate = `{{.Flag}} {{.CountryCode}} {{.Index}} | {{.Direction}} {{.Speed}}{{.SpeedUnit}}`
+const DefaultNameTemplate = `{{.OriginalName}} | ⬇️ {{.DownloadSpeedMBps}}MB/s | ⚡{{.LatencyMs}}ms | 📦{{.PacketLoss}}%`
 
 // NodeNameData is the data passed to the rename template.
 type NodeNameData struct {
-	Flag              string // country flag emoji
-	CountryCode       string // e.g. US, HK
-	Index             string // padded number, e.g. 001
+	OriginalName      string // original proxy name
+	Flag              string // country flag emoji (empty when location is not queried)
+	CountryCode       string // e.g. US, HK (empty when location is not queried)
+	Index             string // padded global sequence number, e.g. 001
 	Direction         string // ⬇️, ⬆️, or ⚡
 	Speed             string // primary metric value
 	SpeedUnit         string // MB/s or ms
 	LatencyMs         string // latency in milliseconds
 	DownloadSpeedMBps string // download MB/s
 	UploadSpeedMBps   string // upload MB/s
+	PacketLoss        string // packet loss percentage, e.g. 0.0
 }
 
 // GenerateNodeNameFromTemplate renders name from a text/template. Placeholders:
-// {{.Flag}}, {{.CountryCode}}, {{.Index}}, {{.Direction}}, {{.Speed}}, {{.SpeedUnit}}, {{.LatencyMs}}, {{.DownloadSpeedMBps}}, {{.UploadSpeedMBps}}.
+// {{.OriginalName}}, {{.Index}}, {{.Direction}}, {{.Speed}}, {{.SpeedUnit}},
+// {{.LatencyMs}}, {{.DownloadSpeedMBps}}, {{.UploadSpeedMBps}}, {{.PacketLoss}}.
+// {{.Flag}} and {{.CountryCode}} are empty unless set externally.
 // If template is empty, DefaultNameTemplate is used. On execute error, falls back to default format.
-func GenerateNodeNameFromTemplate(tmpl string, countryCode string, latency time.Duration, downloadSpeed, uploadSpeed float64, nameCount map[string]int) (string, error) {
+func GenerateNodeNameFromTemplate(tmpl string, originalName string, latency time.Duration, downloadSpeed, uploadSpeed float64, packetLoss float64, nameCount map[string]int) (string, error) {
 	if tmpl == "" {
 		tmpl = DefaultNameTemplate
 	}
@@ -52,21 +38,15 @@ func GenerateNodeNameFromTemplate(tmpl string, countryCode string, latency time.
 	if err != nil {
 		return "", err
 	}
-	data := buildNodeNameData(countryCode, latency, downloadSpeed, uploadSpeed, nameCount)
+	data := buildNodeNameData(originalName, latency, downloadSpeed, uploadSpeed, packetLoss, nameCount)
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, data); err != nil {
-		// fallback to default format so caller does not double-increment nameCount
-		return fmt.Sprintf("%s %s %s | %s %s%s", data.Flag, data.CountryCode, data.Index, data.Direction, data.Speed, data.SpeedUnit), nil
+		return fmt.Sprintf("%s | %s %s%s | ⚡%sms | 📦%s%%", data.OriginalName, data.Direction, data.Speed, data.SpeedUnit, data.LatencyMs, data.PacketLoss), nil
 	}
 	return buf.String(), nil
 }
 
-func buildNodeNameData(countryCode string, latency time.Duration, downloadSpeed, uploadSpeed float64, nameCount map[string]int) NodeNameData {
-	flag, exists := countryFlags[strings.ToUpper(countryCode)]
-	if !exists {
-		flag = "🏳️"
-	}
-	upperCountryCode := strings.ToUpper(countryCode)
+func buildNodeNameData(originalName string, latency time.Duration, downloadSpeed, uploadSpeed float64, packetLoss float64, nameCount map[string]int) NodeNameData {
 	speed := downloadSpeed
 	direction := "⬇️"
 	speedUnit := "MB/s"
@@ -83,8 +63,8 @@ func buildNodeNameData(countryCode string, latency time.Duration, downloadSpeed,
 	if speedUnit == "ms" {
 		speedMBps = speed
 	}
-	count := nameCount[upperCountryCode] + 1
-	nameCount[upperCountryCode] = count
+	count := nameCount[""] + 1
+	nameCount[""] = count
 	dlMBps := downloadSpeed / (1024 * 1024)
 	ulMBps := uploadSpeed / (1024 * 1024)
 	latencyMs := "N/A"
@@ -92,8 +72,9 @@ func buildNodeNameData(countryCode string, latency time.Duration, downloadSpeed,
 		latencyMs = fmt.Sprintf("%d", latency.Milliseconds())
 	}
 	return NodeNameData{
-		Flag:              flag,
-		CountryCode:       upperCountryCode,
+		OriginalName:      originalName,
+		Flag:              "",
+		CountryCode:       "",
 		Index:             fmt.Sprintf("%03d", count),
 		Direction:         direction,
 		Speed:             fmt.Sprintf("%.2f", speedMBps),
@@ -101,10 +82,11 @@ func buildNodeNameData(countryCode string, latency time.Duration, downloadSpeed,
 		LatencyMs:         latencyMs,
 		DownloadSpeedMBps: fmt.Sprintf("%.2f", dlMBps),
 		UploadSpeedMBps:   fmt.Sprintf("%.2f", ulMBps),
+		PacketLoss:        fmt.Sprintf("%.1f", packetLoss),
 	}
 }
 
-func GenerateNodeName(countryCode string, latency time.Duration, downloadSpeed float64, uploadSpeed float64, nameCount map[string]int) string {
-	name, _ := GenerateNodeNameFromTemplate("", countryCode, latency, downloadSpeed, uploadSpeed, nameCount)
+func GenerateNodeName(originalName string, latency time.Duration, downloadSpeed float64, uploadSpeed float64, packetLoss float64, nameCount map[string]int) string {
+	name, _ := GenerateNodeNameFromTemplate("", originalName, latency, downloadSpeed, uploadSpeed, packetLoss, nameCount)
 	return name
 }
